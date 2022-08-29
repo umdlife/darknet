@@ -337,28 +337,31 @@ void draw_detections_v3(image im, detection *dets, int num, float thresh, char *
     // text output
     qsort(selected_detections, selected_detections_num, sizeof(*selected_detections), compare_by_lefts);
     int i;
-    for (i = 0; i < selected_detections_num; ++i) {
-        const int best_class = selected_detections[i].best_class;
-        if (ext_output) {
-            printf("%s: %.0f%%", names[best_class],    selected_detections[i].det.prob[best_class] * 100);
-            printf("\t(left_x: %4.0f   top_y: %4.0f   width: %4.0f   height: %4.0f)\n",
-                round((selected_detections[i].det.bbox.x - selected_detections[i].det.bbox.w / 2)*im.w),
-                round((selected_detections[i].det.bbox.y - selected_detections[i].det.bbox.h / 2)*im.h),
-                round(selected_detections[i].det.bbox.w*im.w), round(selected_detections[i].det.bbox.h*im.h));
-        }
-        int j;
-        for (j = 0; j < classes; ++j) {
-            if (selected_detections[i].det.prob[j] > thresh && j != best_class) {
-                if (ext_output) {
-                    printf("%s: %.0f%%", names[j], selected_detections[i].det.prob[j] * 100);
-                    printf("\t(left_x: %4.0f   top_y: %4.0f   width: %4.0f   height: %4.0f)\n",
-                        round((selected_detections[i].det.bbox.x - selected_detections[i].det.bbox.w / 2)*im.w),
-                        round((selected_detections[i].det.bbox.y - selected_detections[i].det.bbox.h / 2)*im.h),
-                        round(selected_detections[i].det.bbox.w*im.w), round(selected_detections[i].det.bbox.h*im.h));
-                }
-            }
-        }
-    }
+    // for (i = 0; i < selected_detections_num; ++i) {
+    //     const int best_class = selected_detections[i].best_class;
+    //     printf("%s: %.0f%%", names[best_class],    selected_detections[i].det.prob[best_class] * 100);
+    //     if (ext_output)
+    //         printf("\t(left_x: %4.0f   top_y: %4.0f   width: %4.0f   height: %4.0f)\n",
+    //             round((selected_detections[i].det.bbox.x - selected_detections[i].det.bbox.w / 2)*im.w),
+    //             round((selected_detections[i].det.bbox.y - selected_detections[i].det.bbox.h / 2)*im.h),
+    //             round(selected_detections[i].det.bbox.w*im.w), round(selected_detections[i].det.bbox.h*im.h));
+    //     else
+    //         printf("\n");
+    //     int j;
+    //     for (j = 0; j < classes; ++j) {
+    //         if (selected_detections[i].det.prob[j] > thresh && j != best_class) {
+    //             printf("%s: %.0f%%", names[j], selected_detections[i].det.prob[j] * 100);
+
+    //             if (ext_output)
+    //                 printf("\t(left_x: %4.0f   top_y: %4.0f   width: %4.0f   height: %4.0f)\n",
+    //                     round((selected_detections[i].det.bbox.x - selected_detections[i].det.bbox.w / 2)*im.w),
+    //                     round((selected_detections[i].det.bbox.y - selected_detections[i].det.bbox.h / 2)*im.h),
+    //                     round(selected_detections[i].det.bbox.w*im.w), round(selected_detections[i].det.bbox.h*im.h));
+    //             else
+    //                 printf("\n");
+    //         }
+    //     }
+    // }
 
     // image output
     qsort(selected_detections, selected_detections_num, sizeof(*selected_detections), compare_by_probs);
@@ -1348,7 +1351,7 @@ void make_image_red(image im)
     }
 }
 
-image make_attention_image(int img_size, float *original_delta_cpu, float *original_input_cpu, int w, int h, int c)
+image make_attention_image(int img_size, float *original_delta_cpu, float *original_input_cpu, int w, int h, int c, float alpha)
 {
     image attention_img;
     attention_img.w = w;
@@ -1376,7 +1379,7 @@ image make_attention_image(int img_size, float *original_delta_cpu, float *origi
     image resized = resize_image(attention_img, w / 4, h / 4);
     attention_img = resize_image(resized, w, h);
     free_image(resized);
-    for (k = 0; k < img_size; ++k) attention_img.data[k] += original_input_cpu[k];
+    for (k = 0; k < img_size; ++k) attention_img.data[k] = attention_img.data[k]*alpha + (1-alpha)*original_input_cpu[k];
 
     //normalize_image(attention_img);
     //show_image(attention_img, "delta");
